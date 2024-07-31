@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Metronome with Web Audio API</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+    }
+
+    .metronome-container {
+      margin-top: 50px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      width: 300px;
+      margin: auto;
+    }
+
+    input, button, select {
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 16px;
+      width: 80%;
+    }
+
+    .start-button {
+      background-color: #4CAF50; /* Green */
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    .stop-button {
+      background-color: #f44336; /* Red */
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      opacity: 0.8;
+    }
+
+    .status {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="metronome-container">
+    <h1>Metronome</h1>
+    <label for="bpmInput">BPM (Beats Per Minute):</label>
+    <input type="number" id="bpmInput" value="60" min="20" max="240"><br>
+
+    <label for="soundSelect">Select Sound:</label>
+    <select id="soundSelect" onchange="updateSound()">
+      <option value="beep1">Beep 1</option>
+      <option value="beep2">Beep 2</option>
+      <option value="beep3">Beep 3</option>
+      <option value="beep4">Beep 4</option>
+      <option value="beep5">Beep 5</option>
+      <option value="clap">Clap</option>
+      <option value="hihat">Hi-Hat</option>
+      <option value="snare">Snare</option>
+    </select><br>
+
+    <button class="start-button" onclick="startMetronome()">Start</button>
+    <button class="stop-button" onclick="stopMetronome()">Stop</button>
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>
+    let intervalId;
+    let currentSound = 'beep1'; // Default sound
+
+    // Create audio context
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Function to play a beep sound
+    function playBeep(frequency) {
+      const oscillator = audioContext.createOscillator();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+      oscillator.connect(audioContext.destination);
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.1); // Play for 0.1 seconds
+    }
+
+    // Function to play a clap sound (simplified as a noise burst)
+    function playClap() {
+      const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.1, audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * 0.3; // Random noise
+      }
+      const noise = audioContext.createBufferSource();
+      noise.buffer = buffer;
+      noise.connect(audioContext.destination);
+      noise.start();
+    }
+
+    // Function to play a hi-hat sound (simplified as a high frequency noise burst)
+    function playHiHat() {
+      const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.1, audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * 0.1; // Random noise
+      }
+      const noise = audioContext.createBufferSource();
+      noise.buffer = buffer;
+      noise.connect(audioContext.destination);
+      noise.start();
+    }
+
+    // Function to play a snare sound (simplified as a burst of noise)
+    function playSnare() {
+      const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.1, audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * 0.5; // Random noise
+      }
+      const noise = audioContext.createBufferSource();
+      noise.buffer = buffer;
+      noise.connect(audioContext.destination);
+      noise.start();
+    }
+
+    // Function to play the selected sound
+    function playSound(soundName) {
+      switch (soundName) {
+        case 'beep1':
+          playBeep(440);
+          break;
+        case 'beep2':
+          playBeep(554);
+          break;
+        case 'beep3':
+          playBeep(659);
+          break;
+        case 'beep4':
+          playBeep(739);
+          break;
+        case 'beep5':
+          playBeep(880);
+          break;
+        case 'clap':
+          playClap();
+          break;
+        case 'hihat':
+          playHiHat();
+          break;
+        case 'snare':
+          playSnare();
+          break;
+      }
+    }
+
+    function updateSound() {
+      currentSound = document.getElementById('soundSelect').value;
+    }
+
+    function startMetronome() {
+      const bpm = parseInt(document.getElementById('bpmInput').value, 10);
+      if (isNaN(bpm) || bpm < 20 || bpm > 240) {
+        alert('Please enter a BPM between 20 and 240.');
+        return;
+      }
+
+      clearInterval(intervalId);
+      intervalId = setInterval(() => playSound(currentSound), (60 / bpm) * 1000);
+      document.getElementById('status').innerText = 'Metronome is running...';
+    }
+
+    function stopMetronome() {
+      clearInterval(intervalId);
+      document.getElementById('status').innerText = 'Metronome stopped.';
+    }
+  </script>
+</body>
+</html>
