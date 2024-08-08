@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FretBoard Memorizer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    input, button {
+      margin: 10px;
+      padding: 10px;
+      font-size: 16px;
+    }
+    .output {
+      margin-top: 20px;
+      font-size: 38.4px; /* Increased by 60% from 24px */
+      color: #333;
+    }
+    .stop-message {
+      font-size: 12px; /* 50% of the original 24px */
+      color: #333;
+    }
+    .start-button {
+      background-color: #4CAF50; /* Green */
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .stop-button {
+      background-color: #f44336; /* Red */
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <h1>FretBoard Memorizer</h1>
+  
+  <label for="itemsInput">Enter items (comma-separated):</label><br>
+  <input type="text" id="itemsInput" value="E, G, B"><br>
+
+  <label for="intervalInput">Interval (seconds):</label><br>
+  <input type="number" id="intervalInput" value="1" min="1"><br>
+
+  <label for="durationInput">Duration (minutes):</label><br>
+  <input type="number" id="durationInput" value="2" min="1"><br>
+
+  <button class="start-button" onclick="startSelection()">Start</button>
+  <button class="stop-button" onclick="stopSelection()">Stop</button>
+
+  <div class="output" id="output"></div>
+
+  <script>
+    let intervalId;
+    let timeoutId;
+    let lastSelectedItem = null;
+    let consecutiveCount = 0;
+
+    function startSelection() {
+      // Get user inputs
+      const itemsInput = document.getElementById('itemsInput').value;
+      const intervalInput = parseInt(document.getElementById('intervalInput').value, 10);
+      const durationInput = parseInt(document.getElementById('durationInput').value, 10);
+
+      // Validate inputs
+      if (!itemsInput || !intervalInput || !durationInput) {
+        alert('Please fill in all fields.');
+        return;
+      }
+
+      // Parse items and trim spaces
+      const items = itemsInput.split(',').map(item => item.trim());
+
+      // Calculate duration in milliseconds
+      const durationMilliseconds = durationInput * 60 * 1000;
+
+      // Function to select a random item and announce it
+      function selectRandomItem() {
+        let selectedItem;
+        do {
+          const randomIndex = Math.floor(Math.random() * items.length);
+          selectedItem = items[randomIndex];
+        } while (selectedItem === lastSelectedItem && consecutiveCount >= 2);
+
+        // Update last selected item and count
+        if (selectedItem === lastSelectedItem) {
+          consecutiveCount++;
+        } else {
+          consecutiveCount = 0;
+        }
+        lastSelectedItem = selectedItem;
+
+        // Display and announce the selected item
+        document.getElementById('output').innerText = selectedItem;
+        const utterance = new SpeechSynthesisUtterance(selectedItem);
+        utterance.voice = speechSynthesis.getVoices().find(voice => voice.name.includes('Male'));
+        speechSynthesis.speak(utterance);
+      }
+
+      // Start the interval
+      intervalId = setInterval(selectRandomItem, intervalInput * 1000);
+
+      // Stop the interval after the duration
+      timeoutId = setTimeout(() => {
+        clearInterval(intervalId);
+        document.getElementById('output').innerHTML = `<span class="stop-message">Random selection process ended.</span>`;
+      }, durationMilliseconds);
+    }
+
+    function stopSelection() {
+      clearInterval(intervalId);
+      clearTimeout(timeoutId);
+      document.getElementById('output').innerHTML = `<span class="stop-message">Random selection process stopped.</span>`;
+    }
+  </script>
+</body>
+</html>
